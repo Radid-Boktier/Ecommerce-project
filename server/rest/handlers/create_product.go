@@ -23,3 +23,4 @@ func CreateProduct(w http.ResponseWriter, r *http.Request){
 
 	util.SendData(w,createdProduct,201)
 }
+
