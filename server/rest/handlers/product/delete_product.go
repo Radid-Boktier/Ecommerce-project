@@ -1,8 +1,8 @@
 package product
 
 import (
-	"ecommerce-server/database"
 	"ecommerce-server/util"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -12,11 +12,17 @@ func (h *Handler) DeleteProduct (w http.ResponseWriter, r *http.Request) {
 
 	pId, err := strconv.Atoi(productID)
 	if err != nil {
-		http.Error(w, "please give me a valid product id", 400)
+		fmt.Println(err)
+		util.SendError(w, http.StatusBadRequest, "Invalid product id")
 		return
 	}
 
-	database.Delete(pId)
+	err = h.productRepo.Delete(pId)
+	if err != nil {
+		fmt.Println(err)
+		util.SendError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
 
-	util.SendData(w, "Successfully deleted product", 201)
+	util.SendData(w, http.StatusOK, "Successfully deleted product")
 }

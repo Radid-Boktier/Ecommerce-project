@@ -1,18 +1,18 @@
 package review
 
-import (
-	middleware "ecommerce-server/rest/middlewares"
-	"net/http"
-)
+// import (
+// 	middleware "ecommerce-server/rest/middlewares"
+// 	"net/http"
+// )
 
-func (h *Handler) RegisterRoutes(
-	mux *http.ServeMux, 
-	manager *middleware.Manager,
-) {
-	mux.Handle(
-		"GET /reviews",
-		manager.With(
-			http.HandlerFunc(h.GetReviews),
-		),
-	) // route
-}
+// func (h *Handler) RegisterRoutes(
+// 	mux *http.ServeMux,
+// 	manager *middleware.Manager,
+// ) {
+// 	mux.Handle(
+// 		"GET /reviews",
+// 		manager.With(
+// 			http.HandlerFunc(h.GetReviews),
+// 		),
+// 	) // route
+// }

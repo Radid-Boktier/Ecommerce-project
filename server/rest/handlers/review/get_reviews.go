@@ -1,25 +1,25 @@
 package review
 
-import (
-	"ecommerce-server/database"
-	"ecommerce-server/util"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
+// import (
+// 	"ecommerce-server/database"
+// 	"ecommerce-server/util"
+// 	"encoding/json"
+// 	"fmt"
+// 	"net/http"
+// )
 
-func (h *Handler) GetReviews(w http.ResponseWriter, r *http.Request){
-	var newUser database.User
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&newUser)
+// func (h *Handler) GetReviews(w http.ResponseWriter, r *http.Request){
+// 	var newUser database.User
+// 	decoder := json.NewDecoder(r.Body)
+// 	err := decoder.Decode(&newUser)
 
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Invalid Request Data", http.StatusBadRequest)
-		return
-	}
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		http.Error(w, "Invalid Request Data", http.StatusBadRequest)
+// 		return
+// 	}
 
-	createdUser := newUser.Store()
+// 	createdUser := newUser.Store()
 
-	util.SendData(w,createdUser,http.StatusCreated)
-}
+// 	util.SendData(w, http.StatusCreated, createdUser)
+// }

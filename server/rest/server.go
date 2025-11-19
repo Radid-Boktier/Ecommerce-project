@@ -46,7 +46,7 @@ func (server *Server) Start() {
 
 	server.productHandler.RegisterRoutes(mux, manager)
 	server.userHandler.RegisterRoutes(mux, manager)
-	server.reviewHandler.RegisterRoutes(mux, manager)
+	// server.reviewHandler.RegisterRoutes(mux, manager)
 	
 	addr := ":" + strconv.Itoa(server.cnf.HttpPort)
 	fmt.Println("Server running on port", addr)
