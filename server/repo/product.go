@@ -1,11 +1,17 @@
 package repo
 
+import (
+	"database/sql"
+
+	"github.com/jmoiron/sqlx"
+)
+
 type Product struct {
-	ID int  `json:"id"`
-	Title string `json:"title"`
-	Description string `json:"description"`
-	Price float64 `json:"price"`
-	ImgUrl string `json:"imageUrl"`
+	ID int  `json:"id" db:"id"`
+	Title string `json:"title" db:"title"`
+	Description string `json:"description" db:"description"`
+	Price float64 `json:"price" db:"price"`
+	ImgUrl string `json:"imageUrl" db:"img_url"`
 }
 
 type ProductRepo interface {
@@ -16,102 +22,102 @@ type ProductRepo interface {
 	Update(product Product) (*Product,error)
 }
 type productRepo struct {
-	productList []*Product
+	db *sqlx.DB
 }
 
 // constructor or constructor function
-func NewProductRepo() ProductRepo {
-	repo := &productRepo{}
-
-	generateInitialProducts(repo)
-
-	return  repo
+func NewProductRepo(db *sqlx.DB) ProductRepo {
+	return &productRepo{
+		db: db,
+	}
 }
 
 func (r *productRepo) Create(p Product) (*Product,error) {
-	p.ID = len(r.productList) + 1
-	r.productList = append(r.productList, &p)
-	return  &p, nil
-}
-func (r *productRepo) Get(productID int) (*Product,error) {
-	for _, product := range r.productList {
-		if product.ID == productID {
-			return product, nil
-		}
+	query := `
+		INSERT INTO products (
+			title,
+			description,
+			price,
+			img_url
+		) VALUES (
+			$1,
+			$2,
+			$3,
+			$4
+		)
+		RETURNING id
+	`
+
+	row := r.db.QueryRow(query,p.Title, p.Description, p.Price, p.ImgUrl)
+	err := row.Scan(&p.ID)
+	if err != nil {
+		return nil, err;
 	}
-	return nil,nil
+
+	return &p,nil
+}
+func (r *productRepo) Get(id int) (*Product,error) {
+	var prd Product
+
+	query := `
+		SELECT 
+			id, 
+			title, 
+			description, 
+			price, 
+			img_url 
+		from products
+		WHERE id = $1
+	`
+	err := r.db.Get(&prd, query, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &prd, nil
 }
 func (r *productRepo)	List() ([]*Product,error) {
-	return  r.productList,nil
-}
-func (r *productRepo)	Delete(productID int) error {
-	var tempList []*Product
+	var productList []*Product
 
-	for _, p := range r.productList {
-		if p.ID != productID {
-			tempList = append(tempList, p)
-		}
+	query := `
+		SELECT 
+			id, 
+			title, 
+			description, 
+			price, 
+			img_url 
+		from products
+	`
+	err := r.db.Select(&productList, query)
+	if err != nil {
+		return nil, err
 	}
-	r.productList = tempList
-	return  nil
+	return productList, nil
 }
-func (r *productRepo)	Update(product Product) (*Product,error) {
-	for idx, p := range r.productList {
-		if p.ID == product.ID {
-			r.productList[idx] = &product
-		}
-	}
-	return  &product, nil
-}
-
-func generateInitialProducts(r *productRepo) { 
-	prd1 := &Product{
-		ID: 1,
-		Title: "Orange",
-		Description: "Orange is red. I love orange",
-		Price: 100,
-		ImgUrl: "https://www.dole.com/sites/default/files/media/2025-01/oranges.png",
-	}
-	prd2 := &Product{
-		ID: 2,
-		Title: "Apple",
-		Description: "Apple is red. I love Apple",
-		Price: 100,
-		ImgUrl: "https://www.harrisfarm.com.au/cdn/shop/products/40715-done.jpg?v=1623908361&width=1946",
-	}
-	prd3 := &Product{
-		ID: 3,
-		Title: "Banana",
-		Description: "Banana is yellow. I love Banana",
-		Price: 100,
-		ImgUrl: "https://www.healthxchange.sg/adobe/dynamicmedia/deliver/dm-aid--bc117ef2-13c7-4c76-805d-3a4ad592a918/good-reasons-to-eat-a-banana-today.jpg?preferwebp=true",
-	}
-	prd4 := &Product{
-		ID: 4,
-		Title: "Grape",
-		Description: "Grape is green. I love grape",
-		Price: 200,
-		ImgUrl: "https://nationwideplants.com/cdn/shop/files/flame_seedless_grapes_vinyard.jpg?v=1731040443&width=1214",
-	}
-	prd5 := &Product{
-		ID: 5,
-		Title: "Mango",
-		Description: "Mango is red. I love mango",
-		Price: 1000,
-		ImgUrl: "https://content.presspage.com/uploads/1460/69fbd9b4-d9fb-4591-8ede-0deb9c917a13/1920_stock-photo-fresh-mango-129537233.jpg?10000",
-	}
-	prd6 := &Product{
-		ID: 6,
-		Title: "Pomegranate",
-		Description: "Pomegranate is red. I love Pomegranate",
-		Price: 300,
-		ImgUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlBvUi9p7zyfsUPbybYNRNeUN6rL5pT3-2Cg&s",
+func (r *productRepo)	Update(p Product) (*Product,error) {
+	query := `
+		UPDATE products
+		SET title=$1, description=$2, price=$3, img_url=$4
+		WHERE id = $5
+	`
+	row := r.db.QueryRow(query, p.Title, p.Description, p.Price, p.ImgUrl,p.ID)
+	err := row.Err()
+	if err != nil {
+		return nil, err
 	}
 
-	r.productList = append(r.productList, prd1)
-	r.productList = append(r.productList, prd2)
-	r.productList = append(r.productList, prd3)
-	r.productList = append(r.productList, prd4)
-	r.productList = append(r.productList, prd5)
-	r.productList = append(r.productList, prd6)
+	return &p, nil
 }
+func (r *productRepo)	Delete(id int) error {
+	query := `
+		DELETE FROM products WHERE id = $1
+	`
+	_, err := r.db.Exec(query,id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+

@@ -22,7 +22,7 @@ func Serve() {
 		os.Exit(1)
 	}
 	
-	productRpo := repo.NewProductRepo()
+	productRpo := repo.NewProductRepo(dbCon)
 	userRepo := repo.NewUserRepo(dbCon)
 	reviewHandler := review.NewHandler()
 
