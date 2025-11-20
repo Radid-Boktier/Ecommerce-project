@@ -37,7 +37,7 @@ func NewUserRepo(db *sqlx.DB) UserRepo {
 }
 
 
-func (u userRepo) Create(user User) (*User,error) {
+func (u *userRepo) Create(user User) (*User,error) {
 	query :=` 
 		INSERT INTO users (
 			first_name,
@@ -71,12 +71,12 @@ func (u userRepo) Create(user User) (*User,error) {
 	return &user, nil
 }
 
-func (u userRepo) Find(email, pass string) (*User, error) {
+func (u *userRepo) Find(email, pass string) (*User, error) {
 	var user User
 	query := `
 		SELECT id, first_name, last_name, email, password, is_shop_owner
 		FROM users
-		WHERE email = $1 AND password = &2
+		WHERE email = $1 AND password = $2
 		LIMIT 1
 	`
 	err := u.db.Get(&user, query, email, pass)
@@ -86,6 +86,5 @@ func (u userRepo) Find(email, pass string) (*User, error) {
 		}
 		return  nil, err
 	}
-
 	return &user, nil
 }
