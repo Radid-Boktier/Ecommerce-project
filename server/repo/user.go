@@ -1,12 +1,19 @@
 package repo
 
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
+
 type User struct {
-	ID int `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName string `json:"last_name"`
-	Email string `json:"email"`
-	Password string `json:"password"`
-	IsShopOwner bool `json:"is_shop_owner"`
+	ID int `json:"id" db:"id"`
+	FirstName string `json:"first_name" db:"first_name"`
+	LastName string `json:"last_name" db:"last_name"`
+	Email string `json:"email" db:"email"`
+	Password string `json:"password" db:"password"`
+	IsShopOwner bool `json:"is_shop_owner" db:"is_shop_owner"`
 }
 
 type UserRepo interface {
@@ -19,31 +26,66 @@ type UserRepo interface {
 }
 
 type userRepo struct {
-	users []User
+	db *sqlx.DB
 }
 
 // constructor or constructor function
-func NewUserRepo() UserRepo {
-	return  &userRepo{}
+func NewUserRepo(db *sqlx.DB) UserRepo {
+	return  &userRepo{
+		db: db,
+	}
 }
 
 
 func (u userRepo) Create(user User) (*User,error) {
-	if user.ID != 0 {
-		return  &user, nil
+	query :=` 
+		INSERT INTO users (
+			first_name,
+			last_name,
+			email,
+			password,
+			is_shop_owner
+		)
+		VALUES (
+			:first_name,
+			:last_name,
+			:email,
+			:password,
+			:is_shop_owner
+		)
+		RETURNING id
+`
+	var userID int
+	rows, err := u.db.NamedQuery(query, user)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	
+	if rows.Next() {
+		rows.Scan(&userID)
 	}
 
-	user.ID = len(u.users) + 1
+	user.ID = userID
 
-	u.users = append(u.users,user)
-	return  &user, nil;
+	return &user, nil
 }
 
 func (u userRepo) Find(email, pass string) (*User, error) {
-	for _, usr := range u.users {
-		if usr.Email == email && usr.Password == pass {
-			return &usr, nil
+	var user User
+	query := `
+		SELECT id, first_name, last_name, email, password, is_shop_owner
+		FROM users
+		WHERE email = $1 AND password = &2
+		LIMIT 1
+	`
+	err := u.db.Get(&user, query, email, pass)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
 		}
+		return  nil, err
 	}
-	return nil,nil
+
+	return &user, nil
 }
