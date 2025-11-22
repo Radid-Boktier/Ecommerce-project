@@ -70,9 +70,12 @@ func (r *productRepo) Get(id int) (*domain.Product,error) {
 	}
 	return &prd, nil
 }
-func (r *productRepo)	List() ([]*domain.Product,error) {
-	var productList []*domain.Product
+func (r *productRepo)	List(page, limit int64) ([]*domain.Product,error) {
+	
+	offset := ((page-1) * limit) + 1
 
+	var productList []*domain.Product
+ 
 	query := `
 		SELECT 
 			id, 
@@ -81,12 +84,26 @@ func (r *productRepo)	List() ([]*domain.Product,error) {
 			price, 
 			img_url 
 		from products
+		LIMIT $1
+		OFFSET $2
 	`
-	err := r.db.Select(&productList, query)
+	err := r.db.Select(&productList, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	return productList, nil
+}
+func (r *productRepo)	Count() (int64,error) {
+ 
+	query := `SELECT COUNT(*) FROM products`
+
+	var count int
+	err := r.db.QueryRow(query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	
+	return int64(count), nil
 }
 func (r *productRepo)	Update(p domain.Product) (*domain.Product,error) {
 	query := `
@@ -103,9 +120,7 @@ func (r *productRepo)	Update(p domain.Product) (*domain.Product,error) {
 	return &p, nil
 }
 func (r *productRepo)	Delete(id int) error {
-	query := `
-		DELETE FROM products WHERE id = $1
-	`
+	query := `DELETE FROM products WHERE id = $1`
 	_, err := r.db.Exec(query,id)
 	if err != nil {
 		return err

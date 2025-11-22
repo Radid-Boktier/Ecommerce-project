@@ -18,8 +18,11 @@ func NerService(prdctRepo ProductRepo) Service {
 	func (svc *service) Get(id int) (*domain.Product, error){
 		return  svc.prdctRepo.Get(id)
 	}
-	func (svc *service) List() ([]*domain.Product, error){
-		return  svc.prdctRepo.List()
+	func (svc *service) List(page, limit int64) ([]*domain.Product, error){
+		return  svc.prdctRepo.List(page, limit)
+	}
+	func (svc *service) Count() (int64, error) {
+		return svc.prdctRepo.Count()
 	}
 	func (svc *service) Update(prd domain.Product) (*domain.Product, error){
 		return  svc.prdctRepo.Update(prd)
